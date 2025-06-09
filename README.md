@@ -39,6 +39,13 @@ to be prompted interactively:
 python bf4cr_scraper.py https://bf4cheatreport.com/?pid=YOUR_PID&cnt=200&startdate=YOUR_DATE
 ```
 
+On Windows `cmd.exe`, wrap the URL in quotes to prevent the `&` characters from
+being interpreted by the shell:
+
+```cmd
+python bf4cr_scraper.py "https://bf4cheatreport.com/?pid=YOUR_PID&cnt=200&startdate=YOUR_DATE"
+```
+
 If you omit the URL, you will be prompted:
 
 ```text
