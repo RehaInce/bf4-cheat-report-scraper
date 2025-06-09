@@ -1,10 +1,30 @@
 #!/usr/bin/env python3
-import requests
-import re
+import argparse
 import csv
+import re
 import sys
-from urllib.parse import urljoin
 from datetime import datetime, timezone
+from urllib.parse import urljoin
+
+import requests
+
+
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Scrape bf4cheatreport.com player data into CSV"
+    )
+    parser.add_argument(
+        "url",
+        nargs="?",
+        help="bf4cheatreport.com URL to scrape (will prompt if omitted)",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        help="Output CSV file name. Defaults to <persona>.csv",
+    )
+    return parser.parse_args()
 
 
 def format_datetime(timestamp):
@@ -15,14 +35,20 @@ def format_datetime(timestamp):
     return datetime.fromtimestamp(int(timestamp), timezone.utc).strftime("%y%m%d %H:%M")
 
 
-def main():
-    # --- Prompt user for input URL ---
-    url = input("Please enter the bf4cheatreport.com URL: ").strip()
+def main() -> None:
+    args = parse_args()
+
+    # --- Prompt user for input URL if not provided ---
+    url = args.url
+    if not url:
+        url = input("Please enter the bf4cheatreport.com URL: ").strip()
 
     # --- Fetch page HTML ---
-    response = requests.get(url)
-    if response.status_code != 200:
-        print(f"Error: HTTP {response.status_code} fetching page", file=sys.stderr)
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"Error fetching page: {exc}", file=sys.stderr)
         sys.exit(1)
     html = response.text
 
@@ -35,21 +61,23 @@ def main():
 
     # --- Fetch JSON data from the derived endpoint ---
     json_url = urljoin(url, cr_path)
-    json_resp = requests.get(json_url)
-    if json_resp.status_code != 200:
-        print(f"Error: HTTP {json_resp.status_code} fetching JSON", file=sys.stderr)
+    try:
+        json_resp = requests.get(json_url, timeout=10)
+        json_resp.raise_for_status()
+        data = json_resp.json()
+    except requests.RequestException as exc:
+        print(f"Error fetching JSON: {exc}", file=sys.stderr)
         sys.exit(1)
-    data = json_resp.json()
 
     reports = data.get("br_array", [])
     if not reports:
         print("No reports found in JSON response", file=sys.stderr)
         sys.exit(1)
 
-    # --- Determine output filename from the first personaName ---
+    # --- Determine output filename ---
     persona = reports[0].get("personaName", "output")
-    safe_name = re.sub(r'[^0-9A-Za-z_-]', '_', persona)
-    filename = f"{safe_name}.csv"
+    safe_name = re.sub(r"[^0-9A-Za-z_-]", "_", persona)
+    filename = args.output if args.output else f"{safe_name}.csv"
 
     # --- Define CSV headers in the exact order as the site UI ---
     headers = [
