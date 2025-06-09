@@ -13,7 +13,7 @@ A simple and effective command-line tool to scrape and export Battlefield 4 play
 ## Requirements
 
 * Python 3.8 or higher
-* `requests` library (install via `pip install requests`)
+* `requests` library (install via `pip install -r requirements.txt`)
 
 ## Installation
 
@@ -27,24 +27,30 @@ cd bf4-cheat-report-scraper
 Install required Python dependencies:
 
 ```bash
-pip install requests
+pip install -r requirements.txt
 ```
 
 ## Usage
 
-Run the script from the command line:
+Run the script from the command line. Provide the URL as an argument or omit it
+to be prompted interactively:
 
 ```bash
-python bf4cr_to_csv.py
+python bf4cr_scraper.py https://bf4cheatreport.com/?pid=YOUR_PID&cnt=200&startdate=YOUR_DATE
 ```
 
-When prompted, paste your bf4cheatreport.com URL:
+If you omit the URL, you will be prompted:
 
 ```text
 Please enter the bf4cheatreport.com URL: https://bf4cheatreport.com/?pid=YOUR_PID&cnt=200&startdate=YOUR_DATE
 ```
 
 The CSV file will be created in the same directory, named after the player's username.
+You can override the default filename with the `-o` option:
+
+```bash
+python bf4cr_scraper.py URL -o custom.csv
+```
 
 ## Example Output
 
